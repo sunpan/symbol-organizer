@@ -6,8 +6,8 @@ var document = sketch.getSelectedDocument();
 var page = document.selectedPage;
 
 // Config
-var pluginName = "Symbol Organizer",
-	pluginDomain = "com.sonburn.sketchplugins.symbol-organizer",
+var pluginName = "Hi Toolbox",
+	pluginDomain = "com.sunpan.sketchplugins.symbol-organizer",
 	titleGroupName = "Titles",
 	titleStyleFont = {
 		fontFamily : ["SFProText-Bold","SFUIText-Bold","HelveticaNeue-Bold"],
@@ -38,7 +38,12 @@ var run = function(context) {
 
 var organize = function(context,type) {
 	// Current page
-	var page = context.document.currentPage();
+	
+	var page =getPagebyName(context,"组件");		
+	
+	
+	
+	if ( page ==nil) page=context.document.currentPage();
 
 	// If the current page does not have symbols...
 	if (page.symbols().count() == 0) {
@@ -300,40 +305,44 @@ var organize = function(context,type) {
 		actionWithType(context,"MSCollapseAllGroupsAction").doPerformAction(nil);
 
 		
-		console.log("update sheet begin")
-		
-		var pageName = context.getName()+"_ins";
-		console.log(pageName)
-		var newPage = document.sketchObject.addBlankPage();
-		newPage.setName(pageName);
-		newPage.setRulerBase(CGPointMake(0,0));
-		
-		var outputPage = newPage;
-		var outputSymbols = context.document.sketchObject.documentData().localSymbols();
+		// If user wants to zoom out...
+		if (layoutSettings.zoomOut == 1) {
+			// Adjust view
+			context.document.contentDrawView().zoomToFitRect(page.contentBounds());
+		}
 		
 		
-		console.log("forEach  begin")
-		outputSymbols.forEach(function(symbol){
-			var symbolMaster = (librarySelectValue == 0) ? symbol : importForeignSymbol(symbol,selectedLibrary.sketchObject).symbolMaster(),
-				symbolInstance = symbolMaster.newSymbolInstance();
 
+		var pageName = page.name()+"_ins";
+		
+		
+		var outputPage =getPagebyName(context,pageName);		
+		outputPage.removeAllLayers();
+		if(outputPage ==nil)
+		{
+			var newPage = context.document.addBlankPage();
+			newPage.setName(pageName);
+			outputPage = newPage;
+		}		
+		var outputSymbols = context.document.documentData().localSymbols();
+		
+		
+		var symbolInstances=[];
+		outputSymbols.forEach(function(symbol){
+			var symbolMaster =  symbol;
+			var symbolInstance = symbolMaster.newSymbolInstance();
 			symbolInstance.frame().setX(symbolMaster.frame().x());
 			symbolInstance.frame().setY(symbolMaster.frame().y());
-
-			outputPage.sketchObject.insertLayer_atIndex(symbolInstance,nil);
+			symbolInstances.push(symbolInstance);
 		});
 		
-		
-		
-		
-		
-		
+			outputPage.addLayers(symbolInstances);
 		
 		
 		// If user wants to zoom out...
 		if (layoutSettings.zoomOut == 1) {
 			// Adjust view
-			context.document.contentDrawView().zoomToFitRect(page.contentBounds());
+			context.document.contentDrawView().zoomToFitRect(outputPage.contentBounds());
 		}
 
 		// Feedback to user

@@ -9,6 +9,17 @@ function actionWithType(context,type) {
 		return controller.actionForID(type);
 	}
 }
+function getPagebyName(context,pageName)
+{
+		var ret =nil;		
+		context.document.pages().forEach(function(p){
+				if (p.name()==pageName)
+				{
+					ret=p
+				}
+			});
+	return ret;
+}
 
 function addTextStyle(context,styleName,theStyle) {
 	var sketchVersion = MSApplicationMetadata.metadata().appVersion;
