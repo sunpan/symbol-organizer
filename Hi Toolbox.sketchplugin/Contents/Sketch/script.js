@@ -44,16 +44,38 @@ var toAllSize=function(context) {
 	
 	stdsize={w:750,h:1334,name:""};
 	var allSizes=[
-	{w:750,h:1623,name:"9_20"}，
+	{w:750,h:1623,name:"9_20"},
 	{w:1000,h:1334,name:"3_4"}
 	];
 	
 	allSizes.forEach(function(size){
 		var pageName=page.name()+size.name;
+		//toPage=page.duplicate();
+		//toPage.setName(pageName);
+
+		var toPage =getPagebyName(context,pageName,false);
+		if(toPage!=nil)toPage.removeFromParent();
+		//if(toPage!=nil)toPage.removeFromParent();
+		
+		
 		var toPage =getPagebyName(context,pageName,true);
-		pageName.artboards.froEach(function(artboard){
+		
+		/*
+		var artboards=[];
+		toPage.artboards().forEach(function(artboard){artboards.push(artboard);});
+		artboards.forEach(function(artboard){artboard.removeFromParent();});
+		*/
+		
+		
+		page.artboards().forEach(function(artboard){
 			newArtboard=artboard.duplicate();
-			newArtboard.parent=toPage;
+			//newArtboard.parent=toPage;
+			newArtboard.removeFromParent();
+			newArtboard.frame().setX(newArtboard.frame().x()*size.w/stdsize.w);
+			newArtboard.frame().setY(newArtboard.frame().y()*size.h/stdsize.h);			
+			newArtboard.frame().setWidth(size.w);
+			newArtboard.frame().setHeight(size.h);			
+			toPage.addLayers([newArtboard]);
 			
 		});
 	
