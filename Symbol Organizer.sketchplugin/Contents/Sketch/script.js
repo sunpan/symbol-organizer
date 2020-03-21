@@ -517,7 +517,6 @@ function getLayoutSettings(context,type) {
 			zoomOutCheckbox.setState(originalSettings.zoomOut);
 		});
 
-	console.log("CGRectGetMaxY  begin");
 		settingY = CGRectGetMaxY(alertContent.subviews().lastObject().frame()) + settingPad;
 
 		var divider = createDivider(NSMakeRect(0,settingY,windowWidth,1));
@@ -597,7 +596,6 @@ function getLayoutSettings(context,type) {
 
 		settingY = CGRectGetMaxY(alertContent.subviews().lastObject().frame()) + settingPad;
 
-	console.log("reverseOrderLabel  begin");
 		var reverseOrderLabel = createBoldLabel("Layer List",12,NSMakeRect(0,settingY,leftColWidth,labelHeight));
 		alertContent.addSubview(reverseOrderLabel);
 
@@ -660,7 +658,7 @@ function getLayoutSettings(context,type) {
 	console.log("updateInstanceSheetLabel  begin");
 		settingY = CGRectGetMaxY(alertContent.subviews().lastObject().frame()) + settingPad;
 		var updateInstanceSheetLabel = createBoldLabel("Instance Sheet",12,NSMakeRect(0,settingY,leftColWidth,labelHeight));
-		alertContent.addSubview(updateInstanceSheet);
+		alertContent.addSubview(updateInstanceSheetLabel);
 
 	console.log("updateInstanceSheetCheckbox  begin");
 		var  updateInstanceSheetCheckbox = createCheckbox({name:"Update",value:1},defaultSettings.updateInstanceSheet,NSMakeRect(leftColWidth,settingY,windowWidth - leftColWidth,switchHeight));
