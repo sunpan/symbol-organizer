@@ -433,10 +433,12 @@ var donate = function(context) {
 }
 
 function getLayoutSettings(context,type) {
+	console.log("getLayoutSettings begin");
 	// Page variables
 	var page = context.document.currentPage(),
 		pageInfo = page.userInfo();
 
+	console.log("defaultSettings begin");
 	// Setting variables
 	var defaultSettings = {};
 	defaultSettings.globalSettings = 1;
@@ -466,6 +468,7 @@ function getLayoutSettings(context,type) {
 	// Determine which settings should be used
 	defaultSettings = (documentSettings.globalSettings == 0) ? documentSettings : updateSettingsWithGlobal(getUserDefaults(pluginDomain),defaultSettings);
 
+	console.log("type ? begin");
 	// If type is set and equal to "config", operate in config mode...
 	if (type && type == "config") {
 		var fieldHeight = 22,
@@ -497,6 +500,7 @@ function getLayoutSettings(context,type) {
 		var globalSettingsValue = createCheckbox({name:"Use & modify global settings",value:1},defaultSettings.globalSettings,NSMakeRect(leftColWidth,settingY,windowWidth - leftColWidth,switchHeight));
 		alertContent.addSubview(globalSettingsValue);
 
+	console.log("globalSettingsValue  begin");
 		globalSettingsValue.setAction("callAction:");
 		globalSettingsValue.setCOSJSTargetFunction(function(sender) {
 			var originalSettings = (sender.state() == 0) ? updateSettingsWithDocument(context,defaultSettings) : updateSettingsWithGlobal(getUserDefaults(pluginDomain),defaultSettings);
