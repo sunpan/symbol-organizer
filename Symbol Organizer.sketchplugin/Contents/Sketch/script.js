@@ -521,6 +521,7 @@ function getLayoutSettings(context,type) {
 			zoomOutCheckbox.setState(originalSettings.zoomOut);
 		});
 
+	console.log("CGRectGetMaxY  begin");
 		settingY = CGRectGetMaxY(alertContent.subviews().lastObject().frame()) + settingPad;
 
 		var divider = createDivider(NSMakeRect(0,settingY,windowWidth,1));
@@ -662,6 +663,7 @@ function getLayoutSettings(context,type) {
 		var updateInstanceSheetLabel = createBoldLabel("Instance Sheet",12,NSMakeRect(0,settingY,leftColWidth,labelHeight));
 		alertContent.addSubview(updateInstanceSheet);
 
+	console.log("updateInstanceSheetCheckbox  begin");
 		var  updateInstanceSheetCheckbox = createCheckbox({name:"Update",value:1},defaultSettings.updateInstanceSheet,NSMakeRect(leftColWidth,settingY,windowWidth - leftColWidth,switchHeight));
 		alertContent.addSubview( updateInstanceSheetCheckbox);
 		
@@ -671,6 +673,7 @@ function getLayoutSettings(context,type) {
 		
 		
 		
+	console.log("alertContent  begin");
 		
 		alertContent.frame = NSMakeRect(0,0,windowWidth,CGRectGetMaxY(zoomOutCheckbox.frame()));
 
