@@ -1,4 +1,5 @@
 @import "functions.js";
+@import 'delegate.js';
 
 var sketch = require('sketch');
 var document = sketch.getSelectedDocument();
@@ -298,6 +299,33 @@ var organize = function(context,type) {
 		// Collapse symbols
 		actionWithType(context,"MSCollapseAllGroupsAction").doPerformAction(nil);
 
+		
+		var pageName = context.getName()+"_ins";
+		var newPage = document.sketchObject.addBlankPage();
+		newPage.setName(pageName);
+		newPage.setRulerBase(CGPointMake(0,0));
+		
+		var outputPage = newPage;
+		var outputSymbols = context.document.sketchObject.documentData().localSymbols();
+		
+		
+		outputSymbols.forEach(function(symbol){
+			var symbolMaster = (librarySelectValue == 0) ? symbol : importForeignSymbol(symbol,selectedLibrary.sketchObject).symbolMaster(),
+				symbolInstance = symbolMaster.newSymbolInstance();
+
+			symbolInstance.frame().setX(symbolMaster.frame().x());
+			symbolInstance.frame().setY(symbolMaster.frame().y());
+
+			outputPage.sketchObject.insertLayer_atIndex(symbolInstance,nil);
+		});
+		
+		
+		
+		
+		
+		
+		
+		
 		// If user wants to zoom out...
 		if (layoutSettings.zoomOut == 1) {
 			// Adjust view
@@ -424,6 +452,7 @@ function getLayoutSettings(context,type) {
 	defaultSettings.maxPer = "";
 	defaultSettings.renameSymbols = 0;
 	defaultSettings.zoomOut = 1;
+	defaultSettings.updateInstanceSheet = 1;
 
 	// Get document settings
 	var documentSettings = updateSettingsWithDocument(context,defaultSettings);
@@ -479,6 +508,7 @@ function getLayoutSettings(context,type) {
 			styleNameValue.setStringValue(originalSettings.styleName);
 			styleNameValue.setEnabled(groupTitlesCheckbox.state());
 			reverseOrderCheckbox.setState(originalSettings.reverseOrder);
+			updateInstanceSheetCheckbox.setState(originalSettings.updateInstanceSheet);
 			gatherSymbolsCheckbox.setState(originalSettings.gatherSymbols);
 			horizontalSpaceValue.setStringValue(originalSettings.xPad);
 			verticalSpaceValue.setStringValue(originalSettings.yPad);
@@ -571,6 +601,8 @@ function getLayoutSettings(context,type) {
 
 		var reverseOrderCheckbox = createCheckbox({name:"Reverse sort order",value:1},defaultSettings.reverseOrder,NSMakeRect(leftColWidth,settingY,windowWidth - leftColWidth,switchHeight));
 		alertContent.addSubview(reverseOrderCheckbox);
+		
+		
 
 		settingY = CGRectGetMaxY(alertContent.subviews().lastObject().frame()) + settingPad;
 
@@ -621,6 +653,21 @@ function getLayoutSettings(context,type) {
 		var zoomOutCheckbox = createCheckbox({name:"Zoom & center after organizing",value:1},defaultSettings.zoomOut,NSMakeRect(leftColWidth,settingY,windowWidth - leftColWidth,switchHeight));
 		alertContent.addSubview(zoomOutCheckbox);
 
+		
+		settingY = CGRectGetMaxY(alertContent.subviews().lastObject().frame()) + settingPad;
+		var updateInstanceSheetLabel = createBoldLabel("Instance Sheet",12,NSMakeRect(0,settingY,leftColWidth,labelHeight));
+		alertContent.addSubview(updateInstanceSheet);
+
+		var  updateInstanceSheetCheckbox = createCheckbox({name:"Update",value:1},defaultSettings.updateInstanceSheet,NSMakeRect(leftColWidth,settingY,windowWidth - leftColWidth,switchHeight));
+		alertContent.addSubview( updateInstanceSheetCheckbox);
+		
+		
+		
+		
+		
+		
+		
+		
 		alertContent.frame = NSMakeRect(0,0,windowWidth,CGRectGetMaxY(zoomOutCheckbox.frame()));
 
 		alert.accessoryView = alertContent;
@@ -642,6 +689,7 @@ function getLayoutSettings(context,type) {
 			symbolMaxPerValue,
 			renameSymbolsCheckbox,
 			zoomOutCheckbox,
+			updateInstanceSheetCheckbox,
 			buttonOrganize
 		]);
 
@@ -665,6 +713,7 @@ function getLayoutSettings(context,type) {
 				userDefaults.setObject_forKey(symbolMaxPerValue.stringValue(),"maxPer");
 				userDefaults.setObject_forKey(renameSymbolsCheckbox.state(),"renameSymbols");
 				userDefaults.setObject_forKey(zoomOutCheckbox.state(),"zoomOut");
+				userDefaults.setObject_forKey(updateInstanceSheetCheckbox.state(),"updateInstanceSheet");
 				userDefaults.synchronize();
 			} else {
 				sketch.Settings.setLayerSettingForKey(page,"globalSettings",globalSettingsValue.state());
@@ -680,6 +729,7 @@ function getLayoutSettings(context,type) {
 				sketch.Settings.setLayerSettingForKey(page,"maxPer",symbolMaxPerValue.stringValue());
 				sketch.Settings.setLayerSettingForKey(page,"renameSymbols",renameSymbolsCheckbox.state());
 				sketch.Settings.setLayerSettingForKey(page,"zoomOut",zoomOutCheckbox.state());
+				sketch.Settings.setLayerSettingForKey(page,"updateInstanceSheet",updateInstanceSheetCheckbox.state());
 			}
 
 			return {
@@ -694,7 +744,8 @@ function getLayoutSettings(context,type) {
 				yPad : verticalSpaceValue.stringValue(),
 				maxPer : symbolMaxPerValue.stringValue(),
 				renameSymbols : renameSymbolsCheckbox.state(),
-				zoomOut : zoomOutCheckbox.state()
+				zoomOut : zoomOutCheckbox.state(),
+				updateInstanceSheet : updateInstanceSheetCheckbox.state()
 			}
 		} else return false;
 	}
@@ -713,7 +764,13 @@ function getLayoutSettings(context,type) {
 			yPad : defaultSettings.yPad,
 			maxPer : defaultSettings.maxPer,
 			renameSymbols : defaultSettings.renameSymbols,
-			zoomOut : defaultSettings.zoomOut
+			zoomOut : defaultSettings.zoomOut,
+			updateInstanceSheet : defaultSettings.updateInstanceSheet
 		}
 	}
+}
+function importForeignSymbol(symbol,library) {
+	var objectReference = MSShareableObjectReference.referenceForShareableObject_inLibrary(symbol,library);
+
+	return AppController.sharedInstance().librariesController().importShareableObjectReference_intoDocument(objectReference,data);
 }
