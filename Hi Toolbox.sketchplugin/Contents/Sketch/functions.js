@@ -9,15 +9,27 @@ function actionWithType(context,type) {
 		return controller.actionForID(type);
 	}
 }
-function getPagebyName(context,pageName)
+function getPagebyName(context,pageName,neworEmpty)
 {
-		var ret =nil;		
-		context.document.pages().forEach(function(p){
-				if (p.name()==pageName)
-				{
-					ret=p
-				}
-			});
+	var ret =nil;		
+	context.document.pages().forEach(function(p){
+			if (p.name()==pageName)
+			{
+				ret=p
+			}
+		});
+	if(neworEmpty)
+	{
+		if(ret==nil)
+		{
+			ret = context.document.addBlankPage();
+			ret.setName(pageName);
+		}
+		else
+		{	
+			ret.removeAllLayers();
+		}		
+	}
 	return ret;
 }
 

@@ -36,6 +36,48 @@ var run = function(context) {
 	organize(context,"run");
 }
 
+var toAllSize=function(context) {
+	
+	
+	var page =getPagebyName(context,"效果图");
+	if ( page ==nil) page=context.document.currentPage();
+	
+	stdsize={w:750,h:1334,name:""};
+	var allSizes=[
+	{w:750,h:1623,name:"9_20"}，
+	{w:1000,h:1334,name:"3_4"}
+	];
+	
+	allSizes.forEach(function(size){
+		var pageName=page.name()+size.name;
+		var toPage =getPagebyName(context,pageName,true);
+		pageName.artboards.froEach(function(artboard){
+			newArtboard=artboard.duplicate();
+			newArtboard.parent=toPage;
+			
+		});
+	
+	
+	
+	});
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}
+
+
+
 var organize = function(context,type) {
 	// Current page
 	
@@ -316,14 +358,8 @@ var organize = function(context,type) {
 		var pageName = page.name()+"_ins";
 		
 		
-		var outputPage =getPagebyName(context,pageName);		
-		outputPage.removeAllLayers();
-		if(outputPage ==nil)
-		{
-			var newPage = context.document.addBlankPage();
-			newPage.setName(pageName);
-			outputPage = newPage;
-		}		
+		var outputPage =getPagebyName(context,pageName,true);	
+
 		var outputSymbols = context.document.documentData().localSymbols();
 		
 		

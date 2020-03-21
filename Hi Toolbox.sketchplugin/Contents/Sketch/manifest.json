@@ -35,6 +35,14 @@
 			"handler" : "remove"
 		},
 		{
+			"name" : "Std phone to all size",
+			"identifier" : "toAllSize",
+			"description" : "Std phone to all size",
+			"icon" : "icon.png",
+			"script" : "script.js",
+			"handler" : "toAllSize"
+		},
+		{
 			"name" : "Report Issue",
 			"identifier" : "report",
 			"description" : "Report an issue with Symbol Organizer.",
