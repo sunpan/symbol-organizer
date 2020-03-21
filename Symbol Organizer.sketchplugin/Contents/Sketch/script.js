@@ -300,7 +300,10 @@ var organize = function(context,type) {
 		actionWithType(context,"MSCollapseAllGroupsAction").doPerformAction(nil);
 
 		
+		console.log("update sheet begin")
+		
 		var pageName = context.getName()+"_ins";
+		console.log(pageName)
 		var newPage = document.sketchObject.addBlankPage();
 		newPage.setName(pageName);
 		newPage.setRulerBase(CGPointMake(0,0));
@@ -309,6 +312,7 @@ var organize = function(context,type) {
 		var outputSymbols = context.document.sketchObject.documentData().localSymbols();
 		
 		
+		console.log("forEach  begin")
 		outputSymbols.forEach(function(symbol){
 			var symbolMaster = (librarySelectValue == 0) ? symbol : importForeignSymbol(symbol,selectedLibrary.sketchObject).symbolMaster(),
 				symbolInstance = symbolMaster.newSymbolInstance();
@@ -654,6 +658,10 @@ function getLayoutSettings(context,type) {
 		var zoomOutCheckbox = createCheckbox({name:"Zoom & center after organizing",value:1},defaultSettings.zoomOut,NSMakeRect(leftColWidth,settingY,windowWidth - leftColWidth,switchHeight));
 		alertContent.addSubview(zoomOutCheckbox);
 
+		settingY = CGRectGetMaxY(alertContent.subviews().lastObject().frame()) + settingPad;
+
+		var divider = createDivider(NSMakeRect(0,settingY,windowWidth,1));
+		alertContent.addSubview(divider);
 		
 		settingY = CGRectGetMaxY(alertContent.subviews().lastObject().frame()) + settingPad;
 		var updateInstanceSheetLabel = createBoldLabel("Instance Sheet",12,NSMakeRect(0,settingY,leftColWidth,labelHeight));
@@ -663,12 +671,6 @@ function getLayoutSettings(context,type) {
 		alertContent.addSubview( updateInstanceSheetCheckbox);
 		
 		
-		
-		
-		
-		
-		
-	console.log("alertContent  begin");
 		
 		alertContent.frame = NSMakeRect(0,0,windowWidth,CGRectGetMaxY(updateInstanceSheetCheckbox.frame()));
 
