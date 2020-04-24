@@ -1,5 +1,6 @@
 @import "functions.js";
 @import 'delegate.js';
+@import "papaparse.min.js";
 
 var sketch = require('sketch');
 var document = sketch.getSelectedDocument();
@@ -35,11 +36,483 @@ var config = function(context) {
 var run = function(context) {
 	organize(context,"run");
 }
+/*
+var callSymbolMaster= function(context){
+	
+	//【方案一】
+	//确认是SymbolInstance
+	//找到SymbolMaster
+	//原来的位置加上占位层，如果已经有了就不加了， 占位层是一个group ,里有rect 的背景，复制SymbolMaster背景属性 
+	//移动SymbolMaster 到这页
+	//移动SymbolMaster 到这个位置，只改变xy, 不改变大小
+	//移动SymbolMaster 背景
+	
+	//【方案二】
+	//确认是SymbolInstance
+	//复制layer
+	//隐藏SymbolInstance
+	//解开复制layer
+	
+	
+}
+var returnSymbolMaster= function(context){
+	//确认是SymbolMaster
+	//找到对应的占位层
+	//移动回该页面
+	//移动到该位置
+	//设置背景
+	//删掉占位层
+	
+}*/
+
+
+var suffix_openedSymbol="_symbolopened";
+var symbol_bg_name="_hibg";
+var symbol_datatext_name="_hidatatext";
+
+
+var exportTextStyles= function(context) {
+
+	var filename=getFilePathByPanel(context);
+	var styles = context.document.documentData().layerTextStyles().sharedStyles() ;	
+	//var styles = context.document.documentData().layerTextStyles().objectsSortedByName();
+	
+
+	var sorted_styles=[];
+	styles.forEach(style => {sorted_styles.push(style);});
+
+	//sorted_styles.sort(function(a,b){return b.style().textStyle().attributes().NSFont.pointSize()-a.style().textStyle().attributes().NSFont.pointSize();});
+	//sorted_styles.sort(function(a,b){return b.style().textStyle().attributes().NSFont.pointSize()-a.style().textStyle().attributes().NSFont.pointSize();});
+
+	var data=[];
+
+	sorted_styles.forEach(style => {
+		log("forEach");
+		
+		log("name="+toJSString(style.name())+"FontSize="+style.style().textStyle().attributes().NSFont.pointSize());
+
+
+		var attributes=style.style().textStyle().attributes();
+
+		var row={};
+		row["Key"]=toJSString(style.name());
+		row["FontName"]=(attributes.NSFont!=null)?toJSString(attributes.NSFont.familyName()):"";
+		row["FontSize"]=(attributes.NSFont!=null)?toJSString(attributes.NSFont.pointSize()):"";
+		row["FontColor"]=(attributes.MSAttributedStringColorAttribute!=null)?colorToHex(attributes.MSAttributedStringColorAttribute):"";
+		row["CharacterSpacing"]=(attributes.NSKern!=null)?toJSString(attributes.NSKern):"";
+		row["LineSpacing"]=(attributes.NSParagraphStyle!=null)?toJSString(attributes.NSParagraphStyle.lineSpacing()):"";
+		row["HorizontalAlign"]=(attributes.NSParagraphStyle!=null)?toJSString(attributes.NSParagraphStyle.alignment()):"";
+		row["VerticalAlign"]=(attributes.textStyleVerticalAlignmentKey!=null)?toJSString(attributes.textStyleVerticalAlignmentKey):"";
+		
+		
+		row["Underline"]=(attributes.NSUnderline!=0)?"1":"0";
+		
+		var firstEnabledBorder=style.style().firstEnabledBorder();
+		row["OutLine"]=(firstEnabledBorder!=null)?"1":"0";
+		row["OutlineColor"]=(firstEnabledBorder!=null)?colorToHex(firstEnabledBorder.color()):"";
+		row["OutLineSize"]=(firstEnabledBorder!=null)?toJSString(firstEnabledBorder.thickness()):"";
+		
+		
+		
+		var firstEnabledShadow=style.style().firstEnabledShadow();
+		row["Shadow"]=(firstEnabledShadow!=null)?"1":"0";
+		row["ShadowColor"]=(firstEnabledShadow!=null)?colorToHex(firstEnabledShadow.color()):"";
+		row["ShadowOffsetX"]=(firstEnabledShadow!=null)?toJSString(firstEnabledShadow.offsetX()):"";
+		row["ShadowOffsetY"]=(firstEnabledShadow!=null)?toJSString(firstEnabledShadow.offsetY()):"";
+		row["ShadowBlur"]=(firstEnabledShadow!=null)?toJSString(firstEnabledShadow.blurRadius()):"";
+		
+/*
+		
+		
+		row["NSKern"]=attributes.NSKern;
+		row["NSStrikethrough"]=attributes.NSStrikethrough;
+		row["NSFont"]=attributes.NSFont;
+		row["NSStrikethrough"]=attributes.NSStrikethrough;
+		row["textStyleVerticalAlignmentKey"]=attributes.textStyleVerticalAlignmentKey;
+		row["MSAttributedStringColorAttribute"]=attributes.MSAttributedStringColorAttribute;
+		row["NSParagraphStyle"]=attributes.NSParagraphStyle;
+		row["NSUnderline"]=attributes.NSUnderline;
+
+		row["Attributes"]=JSON.stringify(attributes);
+		
+*/		
+		
+		data.push(row);
+	});
+
+	log("data"+data);
+
+	var csv = Papa.unparse(data);
+	writeFile(filename,'\ufeff'+csv);
+}
+var generateTextStyleArtboard=function(context){
+
+	var toPage =getPagebyName(context,"TextStyles",true);
+	var newArtboard=MSArtboardGroup.new();
+	var artboard_width=2000;
+	//var artboard_height=2000;
+	newArtboard.frame().setX(100);
+	newArtboard.frame().setY(0);			
+	newArtboard.frame().setWidth(artboard_width);
+	//newArtboard.setHasBackgroundColor(true);
+	//newArtboard.setBackgroundColor(NSColor.colorWithRed_green_blue_alpha(0.33, 0.33, 0, 1));
+
+	//newArtboard.frame().setHeight(artboard_height);	
+	toPage.addLayers([newArtboard]);
+	
+	var styles = context.document.documentData().layerTextStyles().sharedStyles() ;	
+	//var styles = context.document.documentData().layerTextStyles().objectsSortedByName();
+	
+	newArtboard.setName("TextStyles Count="+styles.length);
+
+	var textY=50;
+
+
+
+	var sorted_styles=[];
+
+	styles.forEach(style => {sorted_styles.push(style);});
+
+
+
+	sorted_styles.sort(function(a,b){return b.style().textStyle().attributes().NSFont.pointSize()-a.style().textStyle().attributes().NSFont.pointSize();});
+	//sorted_styles.sort(a,b => {return a.localeCompare(b);});
+
+
+
+
+	sorted_styles.forEach(style => {
+		log("forEach");
+		var newText=MSTextLayer.new();
+		newArtboard.addLayers([newText]);
+		log("name="+toJSString(style.name())+"FontSize="+style.style().textStyle().attributes().NSFont.pointSize());
+		//newText.style().setTextStyle(style.style().textStyle());
+       // newText.style().setTextStyle(textStyle);
+		//newText.setSharedStyle(toJSString(style.objectID()));
+	//	log("setStringValue="+toJSString(style.name()));
+		newText.setStringValue(toJSString(style.name()));
+	//	log("addLayers");
+     //   newText.setTextBehaviour(1);
+    //    newText.setTextBehaviour(0);
+		
+		
+        newText.setSharedStyle(style);
+
+		newText.frame().setX(50);
+		newText.frame().setY(textY);	
+		textY+=20+newText.frame().height();
+
+		newText.setName(toJSString(style.name()));
+	});
+
+
+	newArtboard.frame().setHeight(textY);
+    newArtboard.setHasBackgroundColor(true);
+    newArtboard.setBackgroundColor(MSColor.colorWithRed_green_blue_alpha(0.67, 0.33, 0.67, 1));	
+
+};
+
+var addToResourcePage=function(context){
+	var toPage =getPagebyName(context,"Resource",true);
+
+	var artboard=getLayerbyName(context,"Resource",toPage,true);
+	if(artboard==null)
+	{
+		log("create artboard");
+		artboard=MSArtboardGroup.new();
+		artboard.setHasBackgroundColor(true);
+		artboard.setBackgroundColor(MSColor.colorWithRed_green_blue_alpha(0.67, 0.33, 0.67, 1));	
+		var artboard_width=2000;
+		//var artboard_height=2000;
+		artboard.frame().setX(100);
+		artboard.frame().setY(0);			
+		artboard.frame().setWidth(artboard_width);
+		//newArtboard.setHasBackgroundColor(true);
+		//newArtboard.setBackgroundColor(NSColor.colorWithRed_green_blue_alpha(0.33, 0.33, 0, 1));
+
+		//newArtboard.frame().setHeight(artboard_height);
+		artboard.setName("Resource");	
+		toPage.addLayers([artboard]);
+	}
+	
+
+
+	var selected_layers=context.document.selectedLayers().layers();
+	if(selected_layers.length!=1)
+	{
+		sketch.UI.alert("Error","请选择至少一个控件(MSSymbolMaster)。");
+		return;
+	}
+
+	selected_layers.forEach(layer=>{
+
+
+		log("add"+layer);
+
+		found=getLayersbySymbolMaster(context,layer.id,artboard,true);
+		if(found.length==0)
+		{
+			var symbolInstance = layer.newSymbolInstance();
+			symbolInstance.frame().setX(layer.frame().x());
+			symbolInstance.frame().setY(layer.frame().y());
+			artboard.addLayers([symbolInstance]);
+		}
+		else
+		{
+			
+			sketch.UI.alert("Error","控件加入失败，因为已经有了."+layer.name);
+		}
+
+
+	});
+
+
+};
+
+
+var cleanHi=function(context){
+	var openedSymbolLayers=getLayersbyName(context,"*"+suffix_openedSymbol,null,false);
+	openedSymbolLayers.forEach(function(layer){removeLayer(layer)});
+	var openedSymbolLayers=getLayersbyName(context,symbol_bg_name,null,false);
+	openedSymbolLayers.forEach(function(layer){removeLayer(layer)});
+	var openedSymbolLayers=getLayersbyName(context,symbol_datatext_name,null,false);
+	openedSymbolLayers.forEach(function(layer){removeLayer(layer)});
+};
+
+//【方案二】
+var openSymbolMaster= function(context){
+	var selected_layers=context.document.selectedLayers().layers();
+	if(selected_layers.length!=1)
+	{
+		sketch.UI.alert("Error","请选择一个控件的实例(MSSymbolInstance)。");
+		return;
+	}
+	var symbolInstance=selected_layers[0];
+	//确认是SymbolInstance
+	if(symbolInstance.className()!="MSSymbolInstance")
+	{
+		sketch.UI.alert("Error","请选择一个控件的实例(MSSymbolInstance)。");
+		return;
+	}
+	var symbolMaster=symbolInstance.symbolMaster();
+	
+	
+	//确认是不是大小没变SymbolInstance
+	if(symbolInstance.frame().width()!=symbolMaster.frame().width()
+		||symbolInstance.frame().height()!=symbolMaster.frame().height())
+	{
+		sketch.UI.alert("Error","控件的实例(MSSymbolInstance)的大小需要和控件(MSSymbolMaster)相同。");
+		return;
+	}
+	
+	
+	var openedGroup=getLayerbyName(context,"*"+suffix_openedSymbol,symbolInstance.parentGroup(),true);
+	if(openedGroup)
+	{
+		sketch.UI.alert("Error","打开的控件的实例已经存在。"+openedGroup.name());
+		return;
+	}
+	
+	
+	var symbol_bg=getLayerbyName(context,symbol_bg_name,symbolMaster,true);
+	if(symbol_bg!=null)removeLayer(symbol_bg);
+	symbol_bg=MSRectangleShape.new();
+	symbol_bg.setFrame = (MSRect.rectWithRect(NSMakeRect(0,0,symbolMaster.frame().width(),symbolMaster.frame().height())));
+	symbolMaster.addLayers([symbol_bg]);
+	symbol_bg.setName(symbol_bg_name);
+	symbol_bg.setResizingConstraint(0x12);
+	//var symbolInstanceRect = this.getRect(symbolInstance);
+	//复制layer
+	var tempSymbol = symbolInstance.duplicate();
+	
+	//解开复制layer
+	openedGroup = tempSymbol.detachStylesAndReplaceWithGroupRecursively(false);
+	
+	
+	
+	
+	//修改layer名字加特别后缀"_symbolopened"
+	openedGroup.setName(openedGroup.name()+suffix_openedSymbol);
+	
+	//隐藏SymbolInstance
+	symbolInstance.setIsVisible(false);
+	
+	
+	var data={};
+	data["symbolInstance"]=toJSString(symbolInstance.objectID());
+	data["symbolMaster"]=toJSString(symbolMaster.objectID());
+	
+	var symbolMasterChildren = symbolMaster.children();
+	//var symbolInstanceChildren = symbolInstance.children();
+	var openedGroupChildren = openedGroup.children();
+	
+	
+	
+	log("openedGroupChildren.length="+openedGroupChildren.length);
+	log("symbolMasterChildren.length="+symbolMasterChildren.length);
+	
+	
+	var objects_map={};
+	var i;
+	for(i=0;i<openedGroupChildren.length;i++)
+	{
+		openedGroupChildID=toJSString(openedGroupChildren[i].objectID());
+		symbolMasterChildID=toJSString(symbolMasterChildren[i].objectID());
+		//symbolInstanceChildID=toJSString(symbolInstanceChildren[1].objectID());
+		objects_map[openedGroupChildID]=symbolMasterChildID;
+	}		
+	symbolMasterChildren=null;
+	openedGroupChildren=null;
+	removeLayer(symbol_bg);
+	
+	data["objects_map"]=objects_map;
+	
+	var symbol_datatext=MSTextLayer.new();
+	//log("setName");
+	symbol_datatext.setName(symbol_datatext_name);
+	//log("setFontSize");
+	symbol_datatext.setFontSize(6);
+	//log("setTextBehaviour");
+	symbol_datatext.setTextBehaviour(1);
+	//log("stringify");
+	//log("setFrame");
+	//symbol_datatext.setFrame(NSMakeRect(0,0,openedGroup.frame().width(),openedGroup.frame().height()));
+
+	//log("symbol_datatext.setIsVisible");
+	symbol_datatext.setIsVisible(false);
+	symbol_datatext.setStringValue( JSON.stringify(data));
+	//     log("addLayers");
+	openedGroup.addLayers([symbol_datatext]);
+	//log("openedGroup.setIsVisible");
+	openedGroup.setIsVisible(true);
+	//openedGroup.setSelected(true);
+	
+	
+}
+var updateSymbolMaster= function(context){
+
+	//确认是"_symbolopened"
+	var selected_layers=context.document.selectedLayers().layers();
+	if(selected_layers.length!=1)
+	{
+		sketch.UI.alert("Error","请选择一个被打开的控件实例(xxxxx_symbolopened)。");
+		return;
+	}
+	var openedGroup=selected_layers[0];
+	//确认是Opened SymbolInstance
+	if(openedGroup.name().substr(-suffix_openedSymbol.length)!=suffix_openedSymbol)
+	{
+		sketch.UI.alert("Error","请选择一个被打开的控件实例(xxxxx_symbolopened)。");
+		return;
+	}
+	
+	
+	var symbol_bg=getLayerbyName(context,symbol_bg_name,openedGroup,true);
+	if(symbol_bg==null)
+	{
+		sketch.UI.alert("Error","Not Found:"+symbol_bg_name);
+		return;
+	}
+	var symbol_datatext=getLayerbyName(context,symbol_datatext_name,openedGroup,true);
+	if(symbol_datatext==null)
+	{
+		sketch.UI.alert("Error","Not Found:"+symbol_datatext_name);
+		return;
+	}
+	
+	
+	
+	
+	var datatext=symbol_datatext.stringValue();
+	var data=JSON.parse(datatext);
+	var objects_map=data["objects_map"];
+	
+//	log("symbolMaster ID="+data["symbolMaster"]);
+	var symbolMaster=getLayerbyID(context,data["symbolMaster"],null,false);
+//	log("symbolMaster"+symbolMaster);
+	var symbolInstance=getLayerbyID(context,data["symbolInstance"],null,false);
+	
+	var openedGroupChildren = openedGroup.children();
+	var i;
+	for(i=0;i<openedGroupChildren.length;i++)
+	{
+		var openedGroupChild=openedGroupChildren[i];
+		if(openedGroupChild.objectID()==openedGroup.objectID()) continue;
+		if(openedGroupChild.name()==symbol_bg_name) continue;
+		if(openedGroupChild.name()==symbol_datatext_name) continue;
+		openedGroupChildID=toJSString(openedGroupChild.objectID());
+		symbolMasterChildID=objects_map[openedGroupChildID];
+		
+		var symbol_bg_x=symbol_bg.frame().x();
+		var symbol_bg_y=symbol_bg.frame().y();
+		
+		if(symbolMasterChildID!=null)
+		{
+			//找到对应的 SymbolInstance和SymbolMaster
+			//console.log(openedGroupChildID, symbolMasterChildID);
+			
+			symbolMasterChild=getLayerbyID(context,symbolMasterChildID,symbolMaster,false);
+	//		log("symbolMasterChild"+symbolMasterChild);
+			symbolMasterChild.frame().setX(openedGroupChild.frame().x()-symbol_bg_x);
+			symbolMasterChild.frame().setY(openedGroupChild.frame().y()-symbol_bg_y);
+			symbolMasterChild.frame().setWidth(openedGroupChild.frame().width());
+			symbolMasterChild.frame().setHeight(openedGroupChild.frame().height());
+			
+		}
+		else
+		{
+			
+			
+			symbolMasterChild=openedGroupChild.duplicate();
+		//	log("symbolMasterChild"+symbolMasterChild);
+			symbolMasterChild.frame().setX(openedGroupChild.frame().x()-symbol_bg_x);
+			symbolMasterChild.frame().setY(openedGroupChild.frame().y()-symbol_bg_y);
+			symbolMasterChild.frame().setWidth(openedGroupChild.frame().width());
+			symbolMasterChild.frame().setHeight(openedGroupChild.frame().height());
+			symbolMasterChild.removeFromParent();
+			symbolMaster.addLayers([symbolMasterChild]);
+			
+			
+			data["objects_map"][openedGroupChildID]=toJSString(symbolMasterChild.objectID());
+			
+		}
+	}		
+	
+	
+	symbol_datatext.setStringValue( JSON.stringify(data));
+	
+			
+	
+	
+	
+	
+	
+//	finds=symbol.children().filteredArrayUsingPredicate(NSPredicate.predicateWithFormat("name = %@","FixedSafeArea"));
+//	var fixedSafeArea=finds[0];
+	
+	
+	
+	//计算内有所有子物体的相对位置，并应用到SymbolMaster
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 var toAllSize=function(context) {
 	
 	
-	var page =getPagebyName(context,"效果图");
+	var page =getPagebyName(context,"设计图");
+	if ( page ==nil)  page =getPagebyName(context,"效果图");
 	if ( page ==nil) page=context.document.currentPage();
 	
 	stdsize={w:750,h:1334,name:""};
@@ -48,34 +521,140 @@ var toAllSize=function(context) {
 	{w:1000,h:1334,name:"3_4"}
 	];
 	
-	allSizes.forEach(function(size){
-		var pageName=page.name()+size.name;
+	deviceSymbols=getSymbolsbyName(context,"Device/*");
+	
+	log("deviceSymbols.length="+deviceSymbols.length);
+	
+	deviceSymbols.forEach(function(symbol){
+		
+		var symbolName=symbol.name();
+		var  deviceName=symbolName.substring("Device/".length);
+		
+		log("deviceName="+deviceName);
+		var artBoardSize={width:symbol.frame().width(),height:symbol.frame().height()};
+		
+		
+		
+			
+		finds=symbol.children().filteredArrayUsingPredicate(NSPredicate.predicateWithFormat("name = %@","FixedSafeArea"));
+		var fixedSafeArea=finds[0];
+			
+		var fixedSafeAreaRect={
+			x:fixedSafeArea.frame().x(),
+			y:fixedSafeArea.frame().y(),
+			width:fixedSafeArea.frame().width(),
+			height:fixedSafeArea.frame().height()
+		}	
+		log(fixedSafeAreaRect);
+		
+		
+		
+		
+		
+		var pageName=page.name()+"_"+deviceName;
 		//toPage=page.duplicate();
 		//toPage.setName(pageName);
 
-		var toPage =getPagebyName(context,pageName,false);
-		if(toPage!=nil)toPage.removeFromParent();
+		//var toPage =getPagebyName(context,pageName,false);
+		//if(toPage!=nil)toPage.removeFromParent();
 		//if(toPage!=nil)toPage.removeFromParent();
 		
 		
-		var toPage =getPagebyName(context,pageName,true);
+		var toPage =getPagebyName(context,pageName,true,true);
 		
 		/*
 		var artboards=[];
 		toPage.artboards().forEach(function(artboard){artboards.push(artboard);});
 		artboards.forEach(function(artboard){artboard.removeFromParent();});
 		*/
-		
+		var i=0;
 		
 		page.artboards().forEach(function(artboard){
-			newArtboard=artboard.duplicate();
-			//newArtboard.parent=toPage;
-			newArtboard.removeFromParent();
-			newArtboard.frame().setX(newArtboard.frame().x()*size.w/stdsize.w);
-			newArtboard.frame().setY(newArtboard.frame().y()*size.h/stdsize.h);			
-			newArtboard.frame().setWidth(size.w);
-			newArtboard.frame().setHeight(size.h);			
-			toPage.addLayers([newArtboard]);
+
+				//log(artboard);
+				var newArtboard=artboard.duplicate();
+				var newArtboardID=newArtboard.objectID();
+				//newArtboard.parent=toPage;
+				newArtboard.removeFromParent();
+				newArtboard.frame().setX(newArtboard.frame().x()*artBoardSize.width/stdsize.w);
+				newArtboard.frame().setY(newArtboard.frame().y()*artBoardSize.height/stdsize.h);			
+				newArtboard.frame().setWidth(fixedSafeAreaRect.width);
+				newArtboard.frame().setHeight(fixedSafeAreaRect.height);			
+						
+				toPage.addLayers([newArtboard]);
+				
+				var frames={};
+				
+				
+				newArtboard.children().forEach(function(layer){
+					if(layer.parentGroup().objectID()==newArtboardID)
+					{
+						if(layer.name().search("Device/")!=0
+						&&layer.name()!="【界面】/层/黑蒙"
+						&&layer.name()!="【界面】/层/背景"
+						&&layer.name()!="界面/层/黑蒙"
+						&&layer.name()!="界面/层/背景"
+						&&!layer.isLocked())
+						{
+							//log(layer);
+							var frame={
+								x:layer.frame().x(),
+								y:layer.frame().y(),
+								width:layer.frame().width(),
+								height:layer.frame().height(),
+							};
+							frames[layer.objectID()]=frame;
+							
+						}
+					}
+				});
+				
+				//log(frames);
+				
+				newArtboard.frame().setWidth(artBoardSize.width);
+				newArtboard.frame().setHeight(artBoardSize.height);	
+				
+				//log(newArtboard);
+				
+				
+				var deviceInstance = symbol.newSymbolInstance();
+				deviceInstance.frame().setX(0);
+				deviceInstance.frame().setY(0);		
+				deviceInstance.frame().setWidth(artBoardSize.width);
+				deviceInstance.frame().setHeight(artBoardSize.height);	
+				newArtboard.addLayers([deviceInstance]);
+				
+				
+				//log("newArtboard.objectID()="+newArtboardID);
+			
+				newArtboard.children().forEach(function(layer){
+					if(layer.parentGroup().objectID()==newArtboardID)
+					{
+						if(layer.name().search("Device/")!=0
+						&&layer.name()!="【界面】/层/黑蒙"
+						&&layer.name()!="【界面】/层/背景"
+						&&layer.name()!="界面/层/黑蒙"
+						&&layer.name()!="界面/层/背景"
+						&&!layer.isLocked())
+						{
+							
+							var frame=frames[layer.objectID()];
+							if(frame)
+							{
+								//log("setframe"+frame);
+								layer.frame().setX(frame.x+fixedSafeAreaRect.x);
+								layer.frame().setY(frame.y+fixedSafeAreaRect.y);		
+								layer.frame().setWidth(frame.width);
+								layer.frame().setHeight(frame.height);
+							}
+							
+						}
+					}
+				});
+				
+				
+			
+			
 			
 		});
 	
@@ -103,11 +682,11 @@ var toAllSize=function(context) {
 var organize = function(context,type) {
 	// Current page
 	
-	var page =getPagebyName(context,"组件");		
+	//var page =getPagebyName(context,"控件");		
+	//if ( page ==nil)  page =getPagebyName(context,"组件");		
 	
-	
-	
-	if ( page ==nil) page=context.document.currentPage();
+	//if ( page ==nil) 
+	var page=context.document.currentPage();
 
 	// If the current page does not have symbols...
 	if (page.symbols().count() == 0) {
@@ -372,7 +951,7 @@ var organize = function(context,type) {
 		// If user wants to zoom out...
 		if (layoutSettings.zoomOut == 1) {
 			// Adjust view
-			context.document.contentDrawView().zoomToFitRect(page.contentBounds());
+			context.document.contentDrawView().zoomToFitRect(page.contentBounds());       
 		}
 		
 		
@@ -380,11 +959,27 @@ var organize = function(context,type) {
 		var pageName = page.name()+"_ins";
 		
 		
-		var outputPage =getPagebyName(context,pageName,true);	
+		var outputPage =getPagebyName(context,pageName,true,true);	
 
-		var outputSymbols = context.document.documentData().localSymbols();
+		//var outputSymbols = context.document.documentData().localSymbols();
 		
-		
+		var outputSymbols = symbols;
+
+		artboard=MSArtboardGroup.new();
+		artboard.setHasBackgroundColor(true);
+		artboard.setBackgroundColor(MSColor.colorWithRed_green_blue_alpha(0.67, 0.33, 0.67, 1));	
+		var artboard_width=2000;
+		//var artboard_height=2000;
+		//newArtboard.setBackgroundColor(NSColor.colorWithRed_green_blue_alpha(0.33, 0.33, 0, 1));
+
+		//newArtboard.frame().setHeight(artboard_height);
+		artboard.setName("Resource");	
+		outputPage.addLayers([artboard]);
+
+
+
+		var minX=0,minY=0;
+		var maxX=0,maxY=0;
 		var symbolInstances=[];
 		outputSymbols.forEach(function(symbol){
 			var symbolMaster =  symbol;
@@ -392,9 +987,21 @@ var organize = function(context,type) {
 			symbolInstance.frame().setX(symbolMaster.frame().x());
 			symbolInstance.frame().setY(symbolMaster.frame().y());
 			symbolInstances.push(symbolInstance);
+			minX=Math.min(minX,symbolMaster.frame().x());
+			minY=Math.min(minY,symbolMaster.frame().y());
+			maxX=Math.max(maxX,symbolMaster.frame().x()+symbolMaster.frame().width());
+			maxY=Math.max(maxY,symbolMaster.frame().y()+symbolMaster.frame().height());
+
 		});
+		artboard.frame().setX(minX-50);
+		artboard.frame().setY(minY-50);
+		artboard.frame().setWidth(maxX-minX+100);
+		artboard.frame().setHeight(maxY-minY+100);			
+		//artboard.frame().setWidth(artboard_width);
+		//newArtboard.setHasBackgroundColor(true);
 		
-			outputPage.addLayers(symbolInstances);
+		artboard.addLayers(symbolInstances);
+
 		
 		
 		// If user wants to zoom out...

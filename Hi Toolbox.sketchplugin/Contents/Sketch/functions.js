@@ -9,23 +9,257 @@ function actionWithType(context,type) {
 		return controller.actionForID(type);
 	}
 }
-function getPagebyName(context,pageName,neworEmpty)
+
+function colorToHex(color){
+	log("color"+color);
+	return  "0x"+this.to2Hex(color.red() * 255)+this.to2Hex(color.green() * 255)+this.to2Hex(color.blue() * 255)+this.to2Hex(color.alpha() * 255);
+	
+}
+
+
+function to2Hex(c) {
+        var hex = Math.round(c).toString(16).toUpperCase();
+        return hex.length == 1 ? "0" + hex :hex;
+    }
+
+function toJSString(str){
+        return new String(str).toString();
+    }
+function toJSNumber(str){
+        return Number( this.toJSString(str) );
+    }
+function pointToJSON(point){
+        return {
+            x: parseFloat(point.x),
+            y: parseFloat(point.y)
+        };
+    }
+function rectToJSON(rect) {
+        return {
+            x: Math.round( rect.x() * 10 ) / 10,
+            y: Math.round( rect.y() * 10 ) / 10,
+            width: Math.round( rect.width() * 10 ) / 10,
+            height: Math.round( rect.height() * 10 ) / 10
+        };
+    }
+
+function removeLayer(layer){
+        var container = layer.parentGroup();
+        if (container) container.removeLayer(layer);
+    }
+function getSymbolsbyName(context,name)
+{
+	var layers=[];
+	context.document.pages().forEach(function(page){
+	var predicate = NSPredicate.predicateWithFormat("className == %@ &&name LIKE %@","MSSymbolMaster",name);
+		finds=page.children().filteredArrayUsingPredicate(predicate);
+		if(finds.length>0)
+		{
+			finds.forEach(function(layer){ layers.push(layer);});	
+		}
+	});
+	return layers;
+}
+/*
+function getLayersbyObjectID(context,objectID)
+{
+	var layers=[];
+	context.document.pages().forEach(function(page){
+	var predicate = NSPredicate.predicateWithFormat("objectID = %@",objectID);
+		finds=page.children().filteredArrayUsingPredicate(predicate);
+		if(finds.length>0)
+		{
+			finds.forEach(function(layer){ layers.push(layer);});	
+		}
+	});
+	return layers;
+}
+*/
+function getLayerbyID(context,id,group,directly)
+{
+//	log("getLayerbyID("+context+","+id+","+group+","+directly+")");
+	var array= getLayersbyID(context,id,group,directly);
+	if(array.length==0)
+		return null;
+	return array[0];
+}
+function getLayersbyID(context,id,group,directly)
+{
+	//log("getLayersbyID("+context+","+id+","+group+","+directly+")");
+	var found_layers=[];
+	//log("predicateWithFormat");
+	var predicate = NSPredicate.predicateWithFormat("objectID = %@",id);
+	//log("groups");
+	var groups=[];
+	if(group!=null){groups.push(group);}
+	//else{context.document.pages().forEach(function(page){groups.push(page);});}
+	else groups=context.document.pages();
+	//log("groups.length=",groups.length);
+	
+	//log("groups=",groups);
+	//log("foreach");
+	groups.forEach(function(myparent){
+		
+		finds=myparent.children().filteredArrayUsingPredicate(predicate);
+		if(finds.length>0)
+		{
+			finds.forEach(function(thelayer){ 
+		//	log("myparent"+myparent);
+		//	log("layer"+thelayer);
+		//	log("layer"+thelayer.parentGroup());
+				if((!directly)||(thelayer.parentGroup()!=null&&toJSString(myparent.objectID())==toJSString(thelayer.parentGroup().objectID())))
+				{
+				//	log("match");
+					found_layers.push(thelayer);
+				//	log("pushed");
+				}		
+			});	
+		}
+	});
+	//	log("return found_layers");
+	return found_layers;
+}
+
+function getLayerbyName(context,name,group,directly)
+{
+	var array= getLayersbyName(context,name,group,directly)
+	if(array.length==0)
+		return null;
+	
+	return array[0];
+}
+function getLayersbyName(context,name,group,directly)
+{
+	
+	
+	log("getLayersbyName("+context+","+name+","+group+","+directly+")");
+	var found_layers=[];
+	//log("predicateWithFormat");
+	var predicate = NSPredicate.predicateWithFormat("name LIKE %@",name);
+	//log("groups");
+	var groups=[];
+	if(group!=null){groups.push(group);}
+	//else{context.document.pages().forEach(function(page){groups.push(page);});}
+	else groups=context.document.pages();
+	
+//	log("groups.length="+groups.length);
+	
+//	log("groups="+groups);
+	//log("foreach");
+	groups.forEach(function(myparent){
+		
+	finds=myparent.children().filteredArrayUsingPredicate(predicate);
+	log("finds.length="+finds.length);
+		if(finds.length>0)
+		{
+			finds.forEach(function(thelayer){ 
+			//log("myparent="+myparent.objectID());
+			//log("thelayer="+thelayer);
+	
+			
+		//	log("layer"+thelayer.parentGroup());
+				if((!directly)||(thelayer.parentGroup()!=null&&toJSString(myparent.objectID())==toJSString(thelayer.parentGroup().objectID())))
+				{
+				//	log("match");
+					found_layers.push(thelayer);
+				//	log("pushed");
+				}		
+			});	
+		}
+	});
+	//	log("return found_layers.length="+found_layers.length);
+	return found_layers;
+}
+
+
+
+function getLayersbySymbolMaster(context,symbolMasterID,group,directly)
+{
+	
+	
+	//log("getLayersbySymbolMaster("+context+","+symbolMasterID+","+group+","+directly+")");
+	var found_layers=[];
+	//log("predicateWithFormat");
+	var predicate = NSPredicate.predicateWithFormat("symbolMaster.id = %@",symbolMasterID);
+	//log("groups");
+	var groups=[];
+	if(group!=null){groups.push(group);}
+	//else{context.document.pages().forEach(function(page){groups.push(page);});}
+	else groups=context.document.pages();
+	
+//	log("groups.length="+groups.length);
+	
+//	log("groups="+groups);
+	//log("foreach");
+	groups.forEach(function(myparent){
+		
+	finds=myparent.children().filteredArrayUsingPredicate(predicate);
+	log("finds.length="+finds.length);
+		if(finds.length>0)
+		{
+			finds.forEach(function(thelayer){ 
+		//	log("myparent="+myparent.objectID());
+		//	log("layerparent"+thelayer.parentGroup().objectID());
+			
+			
+			
+			
+		//	log("layer"+thelayer.parentGroup());
+				if((!directly)||(thelayer.parentGroup()!=null&&toJSString(myparent.objectID())==toJSString(thelayer.parentGroup().objectID())))
+				{
+				//	log("match");
+					found_layers.push(thelayer);
+				//	log("pushed");
+				}		
+			});	
+		}
+	});
+	//	log("return found_layers.length="+found_layers.length);
+	return found_layers;
+}
+function  getFilePathByPanel(context)
+{
+        var filePath = context.document.fileURL()? context.document.fileURL().path().stringByDeletingLastPathComponent(): "~";
+        var fileName = context.document.displayName().stringByDeletingPathExtension()+"_TextStyle.csv";
+        var savePanel = NSSavePanel.savePanel();
+
+        savePanel.setTitle("Save");
+        savePanel.setNameFieldLabel("Save to:");
+        savePanel.setPrompt("Save");
+        savePanel.setCanCreateDirectories(true);
+        savePanel.setNameFieldStringValue(fileName);
+
+        if (savePanel.runModal() != NSOKButton) {
+            return false;
+        }
+        return savePanel.URL().path();
+}
+function writeFile (filename,content) {
+	content = NSString.stringWithString(content),
+	savePathName = [];
+	content.writeToFile_atomically_encoding_error(filename, false, 4, null);
+}
+
+function getPagebyName(context,pageName,newFlag, emptyFlag)
 {
 	var ret =nil;		
 	context.document.pages().forEach(function(p){
 			if (p.name()==pageName)
 			{
-				ret=p
+				ret=p;
 			}
 		});
-	if(neworEmpty)
+	if(newFlag)
 	{
 		if(ret==nil)
 		{
 			ret = context.document.addBlankPage();
 			ret.setName(pageName);
 		}
-		else
+	}
+	if(emptyFlag)
+	{
+		if(ret!=nil)
 		{	
 			ret.removeAllLayers();
 		}		
@@ -436,6 +670,7 @@ function openUrl(url) {
 }
 
 function googleAnalytics(context,category,action,label,value) {
+	/*
 	var trackingID = "UA-117515685-1",
 		uuidKey = "google.analytics.uuid",
 		uuid = NSUserDefaults.standardUserDefaults().objectForKey(uuidKey);
@@ -477,6 +712,7 @@ function googleAnalytics(context,category,action,label,value) {
 		task = session.dataTaskWithURL(NSURL.URLWithString(NSString.stringWithString(url)));
 
 	task.resume();
+	*/
 }
 
 function getUserDefaults(domain) {

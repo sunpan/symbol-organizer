@@ -43,6 +43,48 @@
 			"handler" : "toAllSize"
 		},
 		{
+			"name" : "Open Symbol Master",
+			"identifier" : "openSymbolMaster",
+			"description" : "Open Symbol Master",
+            "shortcut": "ctrl shift o",
+			"icon" : "icon.png",
+			"script" : "script.js",
+			"handler" : "openSymbolMaster"
+		},
+		{
+			"name" : "Update Symbol Master",
+			"identifier" : "updateSymbolMaster",
+			"description" : "Update Symbol Master",
+            "shortcut": "ctrl shift u",
+			"icon" : "icon.png",
+			"script" : "script.js",
+			"handler" : "updateSymbolMaster"
+		},
+		{
+			"name" : "Generate TextStyle Artboard",
+			"identifier" : "generateTextStyleArtboard",
+			"description" : "Generate TextStyle Artboard",
+			"icon" : "icon.png",
+			"script" : "script.js",
+			"handler" : "generateTextStyleArtboard"
+		},
+		{
+			"name" : "Add to Resuorce Page",
+			"identifier" : "addToResourcePage",
+			"description" : "Add to Resuorce Page",
+			"icon" : "icon.png",
+			"script" : "script.js",
+			"handler" : "addToResourcePage"
+		},
+		{
+			"name" : "Clean Hi",
+			"identifier" : "cleanHi",
+			"description" : "Clean Hi",
+			"icon" : "icon.png",
+			"script" : "script.js",
+			"handler" : "cleanHi"
+		},
+		{
 			"name" : "Report Issue",
 			"identifier" : "report",
 			"description" : "Report an issue with Symbol Organizer.",
@@ -59,12 +101,12 @@
 			"handler" : "plugins"
 		},
 		{
-			"name" : "Donate",
-			"identifier" : "donate",
-			"description" : "Donate to the development of Symbol Organizer.",
+			"name" : "Export Text Styles",
+			"identifier" : "exportTextStyles",
+			"description" : "Export Text Styles",
 			"icon" : "icon.png",
 			"script" : "script.js",
-			"handler" : "donate"
+			"handler" : "exportTextStyles"
 		}
 	],
 	"menu" : {
@@ -76,9 +118,14 @@
 			"-",
 			"toAllSize",
 			"-",
-			"report",
-			"plugins",
-			"donate"
+			"openSymbolMaster",
+			"updateSymbolMaster",
+			"-",
+			"generateTextStyleArtboard",
+			"-",
+			"cleanHi",
+			"-",
+			"exportTextStyles"
 		]
 	}
 }
