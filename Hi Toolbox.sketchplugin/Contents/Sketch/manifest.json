@@ -93,12 +93,29 @@
 			"handler" : "report"
 		},
 		{
-			"name" : "Other Plugins",
-			"identifier" : "plugins",
-			"description" : "View all of Sonburn's plugins.",
+			"name" : "Add Hot Box",
+			"identifier" : "hotBoxAdd",
+			"description" : "Add Hot Box",
+            "shortcut": "ctrl shift H",
 			"icon" : "icon.png",
 			"script" : "script.js",
-			"handler" : "plugins"
+			"handler" : "hotBoxAdd"
+		},
+		{
+			"name" : "Hide All Hot Box",
+			"identifier" : "hotBoxHideAll",
+			"description" : "Hide All Hot Box",
+			"icon" : "icon.png",
+			"script" : "script.js",
+			"handler" : "hotBoxHideAll"
+		},
+		{
+			"name" : "Show All Hot Box",
+			"identifier" : "hotBoxShowAll",
+			"description" : "Show All Hot Box",
+			"icon" : "icon.png",
+			"script" : "script.js",
+			"handler" : "hotBoxShowAll"
 		},
 		{
 			"name" : "Export Text Styles",
@@ -107,6 +124,14 @@
 			"icon" : "icon.png",
 			"script" : "script.js",
 			"handler" : "exportTextStyles"
+		},
+		{
+			"name" : "Fix Export",
+			"identifier" : "fixExport",
+			"description" : "Fix Export",
+			"icon" : "icon.png",
+			"script" : "script.js",
+			"handler" : "fixExport"
 		}
 	],
 	"menu" : {
@@ -122,6 +147,12 @@
 			"updateSymbolMaster",
 			"-",
 			"generateTextStyleArtboard",
+			"-",
+			"hotBoxAdd",
+			"hotBoxShowAll",
+			"hotBoxHideAll",
+			"-",
+			"fixExport",
 			"-",
 			"cleanHi",
 			"-",

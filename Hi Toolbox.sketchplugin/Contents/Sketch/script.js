@@ -36,38 +36,10 @@ var config = function(context) {
 var run = function(context) {
 	organize(context,"run");
 }
-/*
-var callSymbolMaster= function(context){
-	
-	//【方案一】
-	//确认是SymbolInstance
-	//找到SymbolMaster
-	//原来的位置加上占位层，如果已经有了就不加了， 占位层是一个group ,里有rect 的背景，复制SymbolMaster背景属性 
-	//移动SymbolMaster 到这页
-	//移动SymbolMaster 到这个位置，只改变xy, 不改变大小
-	//移动SymbolMaster 背景
-	
-	//【方案二】
-	//确认是SymbolInstance
-	//复制layer
-	//隐藏SymbolInstance
-	//解开复制layer
-	
-	
-}
-var returnSymbolMaster= function(context){
-	//确认是SymbolMaster
-	//找到对应的占位层
-	//移动回该页面
-	//移动到该位置
-	//设置背景
-	//删掉占位层
-	
-}*/
-
 
 var suffix_openedSymbol="_symbolopened";
 var symbol_bg_name="_hibg";
+var symbol_hotbox_name="_hotbox";
 var symbol_datatext_name="_hidatatext";
 
 
@@ -99,13 +71,14 @@ var exportTextStyles= function(context) {
 		row["FontName"]=(attributes.NSFont!=null)?toJSString(attributes.NSFont.familyName()):"";
 		row["FontSize"]=(attributes.NSFont!=null)?toJSString(attributes.NSFont.pointSize()):"";
 		row["FontColor"]=(attributes.MSAttributedStringColorAttribute!=null)?colorToHex(attributes.MSAttributedStringColorAttribute):"";
-		row["CharacterSpacing"]=(attributes.NSKern!=null)?toJSString(attributes.NSKern):"";
-		row["LineSpacing"]=(attributes.NSParagraphStyle!=null)?toJSString(attributes.NSParagraphStyle.lineSpacing()):"";
-		row["HorizontalAlign"]=(attributes.NSParagraphStyle!=null)?toJSString(attributes.NSParagraphStyle.alignment()):"";
-		row["VerticalAlign"]=(attributes.textStyleVerticalAlignmentKey!=null)?toJSString(attributes.textStyleVerticalAlignmentKey):"";
+		row["CharacterSpacing"]=(attributes.NSKern!=null)?toJSString(attributes.NSKern):"0";
+		row["LineSpacing"]=(attributes.NSParagraphStyle!=null)?toJSString(attributes.NSParagraphStyle.lineSpacing()):"0";
+		row["HorizontalAlign"]=(attributes.NSParagraphStyle!=null)?alignment2String(attributes.NSParagraphStyle.alignment()):"center";
+		row["VerticalAlign"]=(attributes.textStyleVerticalAlignmentKey!=null)?valignment2String(style.style().textStyle().verticalAlignment()):"middle";
 		
 		
-		row["Underline"]=(attributes.NSUnderline!=0)?"1":"0";
+		row["Underline"]=(attributes.NSUnderline!=null)?attributes.NSUnderline:"0";
+		
 		
 		var firstEnabledBorder=style.style().firstEnabledBorder();
 		row["OutLine"]=(firstEnabledBorder!=null)?"1":"0";
@@ -270,6 +243,115 @@ var addToResourcePage=function(context){
 };
 
 
+var hotBoxAdd=function(context){
+	
+	var selected_layers=context.document.selectedLayers().layers();
+	if(selected_layers.length!=1)
+	{
+		sketch.UI.alert("Error","请选择一个控件(symbolMaster)。");
+		return;
+	}
+	var symbolMaster=selected_layers[0];
+	//确认是SymbolInstance
+	if(symbolMaster.className()!="MSSymbolMaster")
+	{
+		sketch.UI.alert("Error","请选择一个控件(symbolMaster)。现在选择的是"+symbolMaster.className());
+		return;
+	}
+	
+	var symbol_hotbox=getLayerbyName(context,symbol_hotbox_name,symbolMaster,true);
+	if(symbol_hotbox!=null)removeLayer(symbol_hotbox);
+	
+	
+	log("symbolMaster.frame().width()"+symbolMaster.frame().width());
+	
+	
+	symbol_hotbox=MSRectangleShape.new();
+	
+	var width=Math.max(symbolMaster.frame().width(),90);
+	var height=Math.max(symbolMaster.frame().height(),90);
+	var offsetX=Math.floor(width-symbolMaster.frame().width())/2;
+	var offsetY=Math.floor(height-symbolMaster.frame().height())/2;
+	
+	
+	
+    var color = MSColor.colorWithRed_green_blue_alpha(255/255, 0/255, 0/255, 0.3);
+	
+	
+	symbol_hotbox.setFrame(MSRect.rectWithRect(NSMakeRect(-offsetX,-offsetY,width,height)));
+	symbolMaster.addLayers([symbol_hotbox]);
+    symbol_hotbox.style().addStylePartOfType(0);
+    symbol_hotbox.style().fills().firstObject().setColor(color);
+	symbol_hotbox.setName(symbol_hotbox_name);
+	symbol_hotbox.setResizingConstraint(0x12);
+	
+	
+	
+};
+var hotBoxShowAll=function(context){
+	var openedSymbolLayers=getLayersbyName(context,symbol_hotbox_name,null,false);
+	openedSymbolLayers.forEach(function(layer){layer.setIsVisible(true);});
+};
+var hotBoxHideAll=function(context){
+	var openedSymbolLayers=getLayersbyName(context,symbol_hotbox_name,null,false);
+	openedSymbolLayers.forEach(function(layer){layer.setIsVisible(false);});
+	openedSymbolLayers.forEach(function(layer){layer.frame().setX(Math.floor(layer.frame().x()));layer.frame().setY(Math.floor(layer.frame().y()));});
+	
+}
+
+var fixExport=function(context){
+	var allLayers=getLayersbyName(context,"*",null,false);
+
+	
+	allLayers.forEach(function(layer){
+		if(layer.exportOptions().exportFormats().count() > 0)
+		{
+			
+				log("export :"+layer.name());
+			if(layer.exportOptions().exportFormats().count() > 1)
+			{
+			//	log("export format count >1:"+layer.name());
+
+			}
+			
+			if(( new RegExp('^Resources')).test(layer.name()))
+			{
+		//		log("export Resource:"+layer.name());
+				
+				if(layer.exportOptions().exportFormats()[0].scale()!=2)
+				{
+					log("set Scale to 2 "+layer.name());
+					layer.exportOptions().exportFormats()[0].setScale(2);
+				}
+				
+			}
+			else
+			{
+				log("remove exportOptions "+layer.name());
+				layer.exportOptions().removeAllExportFormats();
+				//log("remove exportOptions end"+layer.name());
+			}
+			
+			
+						
+		}
+	
+		
+		
+		
+	});
+};
+
+
+
+
+
+
+
+
+
+
+
 var cleanHi=function(context){
 	var openedSymbolLayers=getLayersbyName(context,"*"+suffix_openedSymbol,null,false);
 	openedSymbolLayers.forEach(function(layer){removeLayer(layer)});
@@ -317,7 +399,7 @@ var openSymbolMaster= function(context){
 	var symbol_bg=getLayerbyName(context,symbol_bg_name,symbolMaster,true);
 	if(symbol_bg!=null)removeLayer(symbol_bg);
 	symbol_bg=MSRectangleShape.new();
-	symbol_bg.setFrame = (MSRect.rectWithRect(NSMakeRect(0,0,symbolMaster.frame().width(),symbolMaster.frame().height())));
+	symbol_bg.setFrame(MSRect.rectWithRect(NSMakeRect(0,0,symbolMaster.frame().width(),symbolMaster.frame().height())));
 	symbolMaster.addLayers([symbol_bg]);
 	symbol_bg.setName(symbol_bg_name);
 	symbol_bg.setResizingConstraint(0x12);

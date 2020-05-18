@@ -9,6 +9,39 @@ function actionWithType(context,type) {
 		return controller.actionForID(type);
 	}
 }
+function alignment2String(aligment)
+{
+	switch(toJSString(aligment))
+	{
+		case "0":
+			return "left";
+		case "2":
+			return "center";
+		case "1":
+			return "right";
+		case "3":
+			return "justified";
+		default:
+			return "unkonw-"+toJSString(aligment);
+	}
+
+}
+function valignment2String(valigment)
+{
+	switch(toJSString(valigment))
+	{
+		case "0":
+			return "top";
+		case "1":
+			return "middle";
+		case "2":
+			return "bottom";
+		default:
+			return "unkonw-"+toJSString(valigment);
+	}
+
+}
+
 
 function colorToHex(color){
 	log("color"+color);
@@ -132,7 +165,7 @@ function getLayersbyName(context,name,group,directly)
 {
 	
 	
-	log("getLayersbyName("+context+","+name+","+group+","+directly+")");
+	//log("getLayersbyName("+context+","+name+","+group+","+directly+")");
 	var found_layers=[];
 	//log("predicateWithFormat");
 	var predicate = NSPredicate.predicateWithFormat("name LIKE %@",name);
@@ -149,7 +182,7 @@ function getLayersbyName(context,name,group,directly)
 	groups.forEach(function(myparent){
 		
 	finds=myparent.children().filteredArrayUsingPredicate(predicate);
-	log("finds.length="+finds.length);
+	//log("finds.length="+finds.length);
 		if(finds.length>0)
 		{
 			finds.forEach(function(thelayer){ 
